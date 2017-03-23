@@ -10,7 +10,9 @@ var testNotes = [{
     text: 'First Note'
 }, {
     _id: new ObjectID(),
-    text: 'Second Note'
+    text: 'Second Note',
+    completed: true,
+    completedAt: 333
 }];
 
 beforeEach((done) => {
@@ -140,4 +142,30 @@ describe('DELETE /todos/:id', () => {
             .expect(404)
             .end(done)
     });
-})
+});
+
+describe('PATCH /todo/:id', () => {
+    it('should update the todo', (done) => {
+        var id = testNotes[0]._id.toHexString();
+        var newTodo = {text: 'updated', completed: 'true'}
+
+        request(app)
+            .patch(`/todos/${id}`)
+            .send(newTodo)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo.text).toBe('updated');
+                expect(res.body.todo.completed).toBe('true');
+                expect(res.body.completedAt).toNotBe(null);
+            })
+            .end((err, res) => {
+                if(err) {
+                    done(err);
+                }
+            });
+    });
+
+    it('should update the completedAt flag when the todo is not completed', (done) => {
+
+    });
+});
