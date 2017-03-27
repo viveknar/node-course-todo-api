@@ -15,6 +15,7 @@ const port = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 
+//------------------- Todos ---------------------
 app.post('/todos', (req, res) => {
     var todo = new Todo({
         text: req.body.text
@@ -105,7 +106,27 @@ app.patch('/todos/:id', (req, res) => {
         res.status(400).send();
     });
 
-})
+});
+
+
+// ----------------- Users --------------------
+app.post('/users', (req, res) => {
+    var reqBody = _.pick(req.body, ['email', 'password']);
+    var newUser = new User(reqBody);
+    newUser.save(function(err, user) {
+        if(err) {
+            res.status(404).send(err);
+        }
+        user.generateAuthToken((err, token) => {
+            if (err) {
+                res.status(404).send(err);
+            } else {
+                res.header('x-auth', token).status(200).send(user.toJSON());
+            }
+        });
+
+    });
+});
 
 app.listen(port, () => {
     console.log(`Started on port ${port}`);
