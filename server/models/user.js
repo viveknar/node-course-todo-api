@@ -40,27 +40,53 @@ var UserSchema = new mongoose.Schema({
 UserSchema.methods.generateAuthToken = function (callback) {
     var user = this;
     var access = 'auth';
-    var token = jwt.sign({id: user._id, access: access}, '123abc').toString();
+    var token = jwt.sign({_id: user._id.toHexString(), access: access}, '123abc').toString();
 
     user.tokens.push({access: access, token: token});
 
-    user.save(function(err) {
+    user.save(function (err) {
         if (err) {
-            return callback(err);
+            callback(err);
         }
 
         else {
-            return callback(undefined, token);
+            callback(undefined, token);
         }
     });
 };
 
-UserSchema.methods.toJSON = function() {
+UserSchema.methods.toJSON = function () {
     var user = this;
     var userObject = user.toObject();
 
     return _.pick(userObject, ['_id', 'email']);
 }
+
+UserSchema.statics.findByToken = function (token) {
+    var User = this;
+    var decoded;
+
+    try {
+        decoded = jwt.verify(token, '123abc');
+        var temp = {
+            _id: decoded._id,
+            'tokens.token': token,
+            'tokens.access': 'auth'
+        };
+        console.log(JSON.stringify(temp, undefined, 2));
+    } catch (e) {
+        return new Promise((resolve, reject) => {
+            reject();
+        });
+    }
+
+    return User.findOne({
+        _id: decoded._id,
+        'tokens.token': token,
+        'tokens.access': 'auth'
+    });
+
+};
 
 var User = mongoose.model('User', UserSchema);
 
